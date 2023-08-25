@@ -1,0 +1,20 @@
+{
+  "dependencies": {
+    "@types/node-fetch": "^2.6.4",
+    "bdfparser": "^2.2.5",
+    "canvas": "^2.11.2",
+    "dayjs": "^1.11.9",
+    "gtfs-realtime-bindings": "^1.1.1",
+    "node-fetch": "2",
+    "readlineiter": "^1.0.1",
+    "tinycolor2": "^1.6.0",
+    "tsc": "^2.0.4"
+  },
+  "name": "tidbty",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/tinycolor2": "^1.4.3"
+  }
+}
