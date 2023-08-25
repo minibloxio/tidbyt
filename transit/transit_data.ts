@@ -9,9 +9,16 @@ let stops = [
   "6120", // ION Northbound
 ];
 
-let nextStopTimes = new Map<string, Date[]>();
+export enum Stop {
+  ColumbiaPhillipNWCorner = "1093",
+  PhillipInFrontOfICON = "3887",
+  PhillipAcrossFromICON = "3889",
+  IONSouthbound = "6004",
+  IONNorthbound = "6120",
+}
 
-(async () => {
+export async function getData(): Promise<Map<string, [string, Date][]>> {
+  let nextStopTimes = new Map<string, [string, Date][]>(stops.map((stop) => [stop, []]));
   try {
     // const response = await fetch("https://webapps.regionofwaterloo.ca/api/grt-routes/api/vehiclepositions", {});
     const response = await fetch("https://webapps.regionofwaterloo.ca/api/grt-routes/api/tripupdates", {});
@@ -21,14 +28,13 @@ let nextStopTimes = new Map<string, Date[]>();
     const buffer = await response.arrayBuffer();
     const feed = GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(new Uint8Array(buffer));
     feed.entity.forEach((entity) => {
-      // console.log(entity.tripUpdate?.trip.routeId);
+      let routeId = entity.tripUpdate?.trip.routeId || "";
       entity.tripUpdate?.stopTimeUpdate?.forEach((stopTimeUpdate) => {
         let stopId = stopTimeUpdate.stopId || "";
         if (stops.includes(stopId)) {
-          console.log(stopId);
           const num = stopTimeUpdate.arrival?.time?.toString() || "0";
           const date = new Date(parseInt(num) * 1000);
-          console.log(`${entity.tripUpdate?.trip.routeId} ${date.toLocaleTimeString()}`);
+          nextStopTimes.get(stopId)?.push([routeId, date]);
         }
       });
     });
@@ -36,4 +42,6 @@ let nextStopTimes = new Map<string, Date[]>();
     console.log(error);
     process.exit(1);
   }
-})();
+
+  return nextStopTimes;
+}

@@ -1,20 +1,18 @@
-import { createCanvas } from "canvas";
+import { CanvasRenderingContext2D, createCanvas } from "canvas";
 import tinycolor from "tinycolor2";
 import fs from "fs";
 import dayjs, { Dayjs } from "dayjs";
 import { $Font, Font } from "bdfparser";
+import child_process from "child_process";
 import getline from "readlineiter";
 
-const canvas = createCanvas(64, 32);
-const ctx = canvas.getContext("2d");
-
-interface Bus {
+export interface Bus {
   route: string;
   colour: string;
   arrivalTime: Dayjs;
 }
 
-function drawBus(font: Font, x: number, y: number, bus: Bus) {
+function drawBus(ctx: CanvasRenderingContext2D, font: Font, x: number, y: number, bus: Bus) {
   const textSize = bus.route.length * 4 - 1;
   const textOffset = Math.floor(textSize / 2);
 
@@ -48,10 +46,11 @@ function drawBus(font: Font, x: number, y: number, bus: Bus) {
 
     ctx.save();
     ctx.translate(x + offset + 23, y + 1);
-    font.draw(seconds.toString(), { direction: "lr" }).draw2canvas(ctx, { "0": null, "1": "white", "2": null });
+    font.draw(seconds.toString().padStart(2, "0"), { direction: "lr" }).draw2canvas(ctx, { "0": null, "1": "white", "2": null });
     ctx.restore();
   }
 
+  // absolute time of arrival
   // ctx.save();
   // ctx.translate(x + 45, y + 1);
   // font.draw(bus.arrivalTime.format("mm"), { direction: "lr" }).draw2canvas(ctx, { "0": null, "1": "white", "2": null });
@@ -66,34 +65,37 @@ function drawBus(font: Font, x: number, y: number, bus: Bus) {
   // font.draw(bus.arrivalTime.format("ss"), { direction: "lr" }).draw2canvas(ctx, { "0": null, "1": "white", "2": null });
   // ctx.restore();
 }
-const buses: Bus[] = [
-  { route: "301n", colour: "blue", arrivalTime: dayjs().add(142, "seconds") },
-  { route: "301S", colour: "blue", arrivalTime: dayjs().add(400, "seconds") },
-  { route: "201", colour: "grey", arrivalTime: dayjs().add(718, "seconds") },
-  { route: "31", colour: "tan", arrivalTime: dayjs().add(2000, "seconds") },
-];
-
-function drawBuses(font: Font) {
-  drawBus(font, 1, 0, buses[0]);
-  drawBus(font, 1, 8, buses[1]);
-  drawBus(font, 1, 16, buses[2]);
-  drawBus(font, 1, 24, buses[3]);
+export async function drawBuses(buses: Bus[], output = "../../pixlet/image") {
+  const font = await $Font(getline("tom-thumb.bdf"));
+  if (!font || !font.headers) {
+    throw new Error("Unable to load font");
+  }
+  //   console.log(`Loaded font. Global size is \
+  // ${font.headers.fbbx} x ${font.headers.fbby} (pixel), \
+  // it contains ${font.length} glyphs.`);
+  const canvas = createCanvas(64, 32);
+  const ctx = canvas.getContext("2d");
+  drawBus(ctx, font, 1, 0, buses[0]);
+  drawBus(ctx, font, 1, 8, buses[1]);
+  drawBus(ctx, font, 1, 16, buses[2]);
+  drawBus(ctx, font, 1, 24, buses[3]);
+  const buffer = canvas.toBuffer("image/png");
+  fs.writeFileSync(`${output}.png`, buffer);
+  fs.writeFileSync(`${output}.pg`, buffer);
+  child_process.execSync(`cwebp -q 100 -lossless ${output}.png -o ${output}.webp`);
 }
 
-(async () => {
-  try {
-    const font = await $Font(getline("tom-thumb.bdf"));
-    if (!font || !font.headers) {
-      throw new Error("Unable to load font");
+if (require.main === module) {
+  (async () => {
+    try {
+      drawBuses([
+        { route: "301n", colour: "blue", arrivalTime: dayjs().add(142, "seconds") },
+        { route: "301S", colour: "blue", arrivalTime: dayjs().add(400, "seconds") },
+        { route: "201", colour: "grey", arrivalTime: dayjs().add(718, "seconds") },
+        { route: "31", colour: "tan", arrivalTime: dayjs().add(2000, "seconds") },
+      ]);
+    } catch (error) {
+      throw error;
     }
-    console.log(`Loaded font. Global size is \
-${font.headers.fbbx} x ${font.headers.fbby} (pixel), \
-it contains ${font.length} glyphs.`);
-
-    drawBuses(font);
-    const buffer = canvas.toBuffer("image/png");
-    fs.writeFileSync("../../pixlet/image.pg", buffer);
-  } catch (error) {
-    throw error;
-  }
-})();
+  })();
+}
