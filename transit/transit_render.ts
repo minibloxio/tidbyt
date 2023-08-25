@@ -79,6 +79,20 @@ export async function drawBuses(buses: Bus[], output = "../../pixlet/image") {
   drawBus(ctx, font, 1, 8, buses[1]);
   drawBus(ctx, font, 1, 16, buses[2]);
   drawBus(ctx, font, 1, 24, buses[3]);
+
+  // last updated time
+  ctx.save();
+  ctx.translate(46, 1);
+  font.draw(dayjs().format("hh"), { direction: "lr" }).draw2canvas(ctx, { "0": null, "1": "white", "2": null });
+
+  ctx.fillStyle = "white";
+  ctx.fillRect(8, 1, 1, 1);
+  ctx.fillRect(8, 3, 1, 1);
+
+  ctx.translate(10, 0);
+  font.draw(dayjs().format("mm"), { direction: "lr" }).draw2canvas(ctx, { "0": null, "1": "white", "2": null });
+  ctx.restore();
+
   const buffer = canvas.toBuffer("image/png");
   fs.writeFileSync(`${output}.png`, buffer);
   fs.writeFileSync(`${output}.pg`, buffer);
