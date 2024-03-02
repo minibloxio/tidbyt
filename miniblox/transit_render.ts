@@ -65,16 +65,15 @@ function drawBus(ctx: CanvasRenderingContext2D, font: Font, x: number, y: number
   // font.draw(bus.arrivalTime.format("ss"), { direction: "lr" }).draw2canvas(ctx, { "0": null, "1": "white", "2": null });
   // ctx.restore();
 }
-export async function drawBuses(buses: Bus[], output = "../../pixlet/image") {
-  const font = await $Font(getline("./tom-thumb.bdf"));
-  if (!font || !font.headers) {
-    throw new Error("Unable to load font");
-  }
+export async function drawBuses(buses: Bus[], output = "../pixlet/image") {
+  const canvas = createCanvas(64, 32);
+  const ctx = canvas.getContext("2d");
+
+  const font = await $Font(getline("tom-thumb.bdf"));
   //   console.log(`Loaded font. Global size is \
   // ${font.headers.fbbx} x ${font.headers.fbby} (pixel), \
   // it contains ${font.length} glyphs.`);
-  const canvas = createCanvas(64, 32);
-  const ctx = canvas.getContext("2d");
+
   drawBus(ctx, font, 1, 0, buses[0]);
   drawBus(ctx, font, 1, 8, buses[1]);
   drawBus(ctx, font, 1, 16, buses[2]);
